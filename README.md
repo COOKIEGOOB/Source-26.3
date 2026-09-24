@@ -38,7 +38,3 @@ Back up your worlds before changing game versions. Do not open worlds containing
 - Original Minecraft content and assets: **Mojang**.
 
 The Joey-JM credit describes this custom build and does not replace the upstream authors' credits or notices.
-
-## 中文
-
-从 Releases 下载 `26.3-JM.html`，用支持 WebAssembly GC 的浏览器打开。新增内容已放入对应的创造模式分类。此版本基于 26.2 移植部分 26.3 功能；游戏内保留原作者鸣谢。请通过游戏导出世界备份，不要用旧版打开新版保存的世界。
