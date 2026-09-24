@@ -7,10 +7,14 @@ A custom browser build based on Eaglercraft 26.2 by o_xer, with selected Minecra
 ## Download and play
 
 1. Open [Releases](https://github.com/joeymavv/26.3-JM/releases).
-2. Download `26.3-JM.html` from the release assets.
+2. Download `26.3-fixed.html` from the release assets.
 3. Open it in a modern browser with WebAssembly GC support, such as current Chrome.
 
 The HTML includes the game assets. An internet connection is needed for multiplayer servers. Single-player worlds are stored in the browser; export worlds from the game to back them up.
+
+## Latest fixes
+
+The current release asset is `26.3-fixed.html`. It corrects the menu and Credits version labels to 26.3-JM and includes startup/loading improvements. Poplar ordering and cushion placement on slabs/stairs are still pending. See the release notes for details and test scope.
 
 ## Included features
 
