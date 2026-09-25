@@ -14,7 +14,14 @@ The HTML includes the game assets. An internet connection is needed for multipla
 
 ## Latest fixes
 
-The current release asset is `26.3-fixed.html`. It corrects the menu and Credits version labels to 26.3-JM and includes startup/loading improvements. Poplar ordering and cushion placement on slabs/stairs are still pending. See the release notes for details and test scope.
+The current release asset is **[26.3-fixed.html](https://github.com/joeymavv/26.3-JM/releases/download/v26.3-jm.1/26.3-fixed.html)**.
+
+- Poplar logs appear with the other logs; the poplar building family follows pale oak.
+- Cushions place at the correct height on slabs and stairs, with working selection, seating and save/reload behavior. Supporting blocks stay intact.
+- Menu and Credits version labels show **26.3-JM**.
+- Startup/loading improvements from the previous update are retained.
+
+See the [release notes](https://github.com/joeymavv/26.3-JM/releases/tag/v26.3-jm.1) for the changes, backups and test scope.
 
 ## Included features
 
