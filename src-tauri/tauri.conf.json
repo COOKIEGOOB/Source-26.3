@@ -72,7 +72,7 @@
       "icons/icon.ico"
     ],
     "macOS": {
-      "minimumSystemVersion": "11.0",
+      "minimumSystemVersion": "13.0",
       "hardenedRuntime": false,
       "entitlements": "entitlements.plist",
       "dmg": {

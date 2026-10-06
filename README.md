@@ -92,7 +92,20 @@ xattr -dr com.apple.quarantine /Applications/26.3-JM.app
 | Binary | `lto = "fat"`, `codegen-units = 1`, `opt-level = 3`, `panic = "abort"`, stripped | Fastest, smallest native shell |
 | Signing | Hardened runtime off, JIT entitlements on | WebAssembly runs fully JIT-compiled |
 
-The build is a **Universal binary** (Apple Silicon + Intel), minimum macOS 11.
+### Which macOS versions does this run on?
+
+**macOS 13 Ventura or newer, fully updated.** Universal binary — Apple Silicon and Intel.
+
+The limit is not Tauri, it is Apple's web engine. 26.3-JM runs on **WebAssembly GC**, which WebKit only gained in **Safari 18.2** (December 2024). Because a Tauri app renders through WKWebView, it uses the system's Safari engine, so the system has to be new enough to have it.
+
+| macOS | Can it run 26.3-JM? |
+| --- | --- |
+| 15 Sequoia / 26 | Yes — ships with Safari 18.2+ |
+| 14 Sonoma | Yes, once Safari 18.2+ is installed via Software Update |
+| 13 Ventura | Yes, once Safari 18.2+ is installed via Software Update |
+| 12 Monterey and older | **No** — Safari cannot be updated to 18.2 on these. Use the browser build in Chrome instead |
+
+If the engine is too old the app shows a plain explanation screen telling you to run Software Update, rather than a black window (`scripts/perf-preamble.js`, WasmGC probe).
 
 ### Building it yourself
 

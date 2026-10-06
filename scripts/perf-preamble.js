@@ -155,6 +155,55 @@
     }
   });
 
+  /* ------------------------------------------------------------------
+   * 7. WebAssembly GC check. The engine requires the WasmGC proposal,
+   *    which WKWebView only gained in Safari 18.2 (December 2024) —
+   *    i.e. macOS 13 Ventura or newer, fully updated. Without this check
+   *    an older system just shows a black window with no explanation.
+   * ------------------------------------------------------------------ */
+  safe('wasm-gc-check', function () {
+    var ok = false;
+    try {
+      // Smallest module that only validates when WasmGC is enabled:
+      // a type section declaring one empty struct (0x5f).
+      ok = typeof WebAssembly !== 'undefined' && WebAssembly.validate(
+        new Uint8Array([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00,
+                        0x01, 0x03, 0x01, 0x5f, 0x00])
+      );
+    } catch (e) {
+      ok = false;
+    }
+
+    window.JM263_WASM_GC = ok;
+    if (ok) return;
+
+    var show = function () {
+      var el = document.createElement('div');
+      el.setAttribute('style', [
+        'position:fixed', 'inset:0', 'z-index:2147483647',
+        'display:flex', 'align-items:center', 'justify-content:center',
+        'background:#16103a', 'color:#fff', 'padding:40px',
+        'font:16px/1.6 -apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif',
+        'text-align:center', '-webkit-user-select:text', 'user-select:text',
+      ].join(';'));
+      el.innerHTML =
+        '<div style="max-width:560px">' +
+        '<div style="font-size:26px;font-weight:700;margin-bottom:16px">This Mac needs a newer system</div>' +
+        '<p>26.3-JM runs on WebAssembly GC, which Apple\u2019s web engine only supports from ' +
+        '<b>Safari 18.2</b> onwards (released December 2024).</p>' +
+        '<p>Open <b>System Settings \u203a General \u203a Software Update</b> and install the latest updates, ' +
+        'then launch 26.3-JM again.</p>' +
+        '<p style="opacity:.7;font-size:14px;margin-top:24px">Requires macOS 13 Ventura or newer. ' +
+        'On macOS 12 Monterey and earlier, Safari cannot be updated far enough \u2014 ' +
+        'play the browser build in Chrome instead.</p>' +
+        '</div>';
+      document.body.appendChild(el);
+    };
+
+    if (document.body) show();
+    else document.addEventListener('DOMContentLoaded', show, { once: true });
+  });
+
   window.JM263_PERF = {
     version: 1,
     flags: FLAGS,
