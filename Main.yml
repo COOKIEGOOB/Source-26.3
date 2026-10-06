@@ -47,10 +47,28 @@ jobs:
     timeout-minutes: 120
 
     steps:
+      - name: Verify the source branch exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF: ${{ inputs.source_ref }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/${{ github.repository }}/commits/$REF" --jq .sha >/dev/null 2>&1; then
+            echo "Found '$REF'."
+            exit 0
+          fi
+          echo "::error::No branch, tag or commit named '$REF' exists in ${{ github.repository }}."
+          echo "Available branches:"
+          gh api "repos/${{ github.repository }}/branches" --jq '.[] | "  - " + .name' || true
+          echo
+          echo "Re-run this workflow and set the 'source_ref' input to the branch that contains src-tauri/."
+          exit 1
+
       - name: Checkout the Tauri project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.source_ref }}
+          fetch-depth: 1
 
       - name: Sanity-check the checkout
         run: |
@@ -71,7 +89,7 @@ jobs:
           echo "Project looks good."
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 20
 
@@ -81,7 +99,7 @@ jobs:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
 
       - name: Cache cargo registry and build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -91,7 +109,7 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: Cache the 86 MB game payload
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .game-cache
           key: game-${{ hashFiles('game.lock.json') }}
@@ -143,7 +161,7 @@ jobs:
           ls -lh
 
       - name: Upload the .dmg
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 26.3-JM-macOS-dmg
           path: out/*
