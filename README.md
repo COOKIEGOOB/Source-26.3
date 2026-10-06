@@ -61,13 +61,15 @@ The finished `.dmg` lands in `./out`.
 **B — let GitHub's macOS runners build it:**
 
 ```bash
-bash scripts/enable-ci.sh                                   # installs ci/macos-dmg.yml into .github/workflows/
+bash scripts/enable-ci.sh                                   # installs macos-dmg.yml into .github/workflows/
 gh workflow run "Build macOS DMG" --ref "$(git branch --show-current)"
 gh run watch
 gh run download --name 26.3-JM-macOS-dmg -D ./out
 ```
 
-The workflow lives at `ci/macos-dmg.yml` rather than `.github/workflows/` because the automation account that created it is not permitted to write workflow files; `scripts/enable-ci.sh` moves it into place and pushes with your own credentials.
+No command line? Download **`macos-dmg.yml`** from the root of this repo and upload it on github.com via *Add file ▸ Upload files*, giving it the path `.github/workflows/macos-dmg.yml`. Then go to the *Actions* tab, pick **Build macOS DMG**, and press *Run workflow*. The DMG appears under *Artifacts* when the run finishes.
+
+The workflow sits in the repo root rather than in `.github/workflows/` because the automation account that created it is not permitted to write workflow files. It checks out whatever branch is named in its `source_ref` input (default: this branch), so it works no matter which branch you upload it to.
 
 Open the DMG and drag **26.3-JM** into *Applications*.
 
@@ -120,7 +122,7 @@ scripts/prepare-game.mjs       fetch, verify, inject, emit dist/index.html
 scripts/perf-preamble.js       the ultra-high-performance runtime patches
 scripts/build-dmg.sh           one-command local macOS build
 scripts/enable-ci.sh           installs the CI workflow into .github/workflows/
-ci/macos-dmg.yml               macOS runner that produces the .dmg
+macos-dmg.yml                  GitHub Actions workflow that produces the .dmg
 src-tauri/tauri.conf.json      window, Info.plist, DMG layout, bundle config
 src-tauri/entitlements.plist   JIT + network entitlements
 src-tauri/src/main.rs          native shell (no custom IPC, no filesystem access)

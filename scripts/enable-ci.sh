@@ -14,7 +14,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 mkdir -p .github/workflows
-cp ci/macos-dmg.yml .github/workflows/macos-dmg.yml
+cp macos-dmg.yml .github/workflows/macos-dmg.yml
 
 git add .github/workflows/macos-dmg.yml
 if git diff --cached --quiet; then
