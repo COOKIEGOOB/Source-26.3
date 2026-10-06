@@ -1,0 +1,8 @@
+{
+  "comment": "Pinned 26.3-JM game payload. The 86 MB HTML is downloaded at build time and never committed.",
+  "release": "https://github.com/joeymavv/26.3-JM/releases/tag/v26.3-jm.1",
+  "filename": "26.3-fixed.html",
+  "url": "https://github.com/joeymavv/26.3-JM/releases/download/v26.3-jm.1/26.3-fixed.html",
+  "size": 85825296,
+  "sha256": ""
+}

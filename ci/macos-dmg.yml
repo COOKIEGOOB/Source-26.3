@@ -1,0 +1,138 @@
+name: Build macOS DMG
+
+on:
+  workflow_dispatch:
+    inputs:
+      universal:
+        description: "Build a Universal (Intel + Apple Silicon) binary"
+        type: boolean
+        default: true
+      publish_release:
+        description: "Attach the DMG to a GitHub release"
+        type: boolean
+        default: false
+      release_tag:
+        description: "Release tag to create/update when publishing"
+        type: string
+        default: "desktop-v26.3.1"
+  push:
+    branches:
+      - "arena/**"
+    paths:
+      - "src-tauri/**"
+      - "scripts/**"
+      - "assets/**"
+      - "package.json"
+      - "game.lock.json"
+      - ".github/workflows/macos-dmg.yml"
+
+concurrency:
+  group: macos-dmg-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dmg:
+    name: Build .dmg on macOS
+    runs-on: macos-14
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Cache cargo registry and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Cache game payload
+        uses: actions/cache@v4
+        with:
+          path: .game-cache
+          key: game-${{ hashFiles('game.lock.json') }}
+
+      - name: Install JS tooling
+        run: npm install --no-audit --no-fund
+
+      - name: Fetch and prepare the game payload
+        run: node scripts/prepare-game.mjs
+
+      - name: Generate application icons
+        run: npx tauri icon assets/app-icon.png
+
+      - name: Build universal .dmg
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.universal }}
+        run: npx tauri build --target universal-apple-darwin --bundles dmg
+
+      - name: Build native-arch .dmg
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.universal }}
+        run: npx tauri build --bundles dmg
+
+      - name: Collect artifacts
+        id: collect
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          found=0
+          while IFS= read -r -d '' f; do
+            cp "$f" out/
+            found=1
+          done < <(find src-tauri/target -name "*.dmg" -print0)
+          if [ "$found" -eq 0 ]; then
+            echo "::error::No .dmg was produced"
+            find src-tauri/target -maxdepth 4 -name "bundle" -type d
+            exit 1
+          fi
+          cd out
+          # Normalise the filename
+          for f in *.dmg; do
+            mv "$f" "26.3-JM-macOS-universal.dmg" 2>/dev/null || true
+            break
+          done
+          shasum -a 256 *.dmg | tee SHA256SUMS-dmg.txt
+          ls -lh
+          echo "dmg=$(ls *.dmg | head -1)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: 26.3-JM-macOS-dmg
+          path: out/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish release
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${{ inputs.release_tag }}"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" \
+              --title "26.3-JM for macOS $TAG" \
+              --notes "Native macOS build of 26.3-JM (Tauri, ultra-high-performance mode).
+
+          The app is not notarised. On first launch run:
+          \`\`\`
+          xattr -dr com.apple.quarantine /Applications/26.3-JM.app
+          \`\`\`
+          or right-click the app and choose Open." \
+              --target "${{ github.sha }}"
+          fi
+          gh release upload "$TAG" out/* --clobber
