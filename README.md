@@ -41,9 +41,9 @@ The implementation uses the 26.2 engine, so some behavior differs from native 26
 
 Back up your worlds before changing game versions. Do not open worlds containing these new blocks/items with an older build; that older build may discard content it does not recognize. An HTML backup does not back up your worlds.
 
-## macOS desktop app (.dmg)
+## Desktop apps (.dmg and .exe)
 
-This repository also builds **26.3-JM as a native macOS application** using [Tauri 2](https://v2.tauri.app/), with ultra-high-performance mode enabled. The game HTML is embedded in the app, so it runs offline (multiplayer still needs a connection) and single-player worlds persist in a stable, app-private store.
+This repository also builds **26.3-JM as a native desktop application** for macOS and Windows using [Tauri 2](https://v2.tauri.app/), with ultra-high-performance mode enabled. The game HTML is embedded in the app, so it runs offline (multiplayer still needs a connection) and single-player worlds persist in a stable, app-private store.
 
 ### Get the .dmg
 
@@ -125,6 +125,47 @@ To build against a different or local game file:
 ```bash
 GAME_LOCAL=/path/to/26.3-fixed.html SKIP_SHA_CHECK=1 npm run dmg
 ```
+
+## Windows app (.exe)
+
+A build produces two Windows files:
+
+| File | What it is |
+| --- | --- |
+| `26.3-JM-Windows-Setup.exe` | NSIS installer. Installs per-user (no admin prompt), adds a Start Menu entry and an uninstaller. |
+| `26.3-JM-Windows-portable.exe` | The bare application. The game is embedded in it — no installer, just run it. |
+
+### Requirements
+
+**Windows 10 1803 or newer**, plus the **Microsoft Edge WebView2 Runtime**. The installer fetches WebView2 silently if it is missing; Windows 11 and most Windows 10 machines already have it. Keep it current — the game needs WebAssembly GC, which is Chromium 119+.
+
+Windows is arguably the better target: WebView2 *is* Chromium, so the engine matches what the game was written against, and there is no Safari-version cliff like on macOS.
+
+Neither `.exe` is code-signed, so SmartScreen shows *"Windows protected your PC"* on first launch. Click **More info ▸ Run anyway**.
+
+### Windows-specific performance settings
+
+WebView2 is launched with:
+
+```
+--ignore-gpu-blocklist --enable-gpu-rasterization --enable-zero-copy
+--enable-accelerated-2d-canvas --canvas-oop-rasterization --use-angle=d3d11
+--disable-background-timer-throttling --disable-renderer-backgrounding
+--disable-backgrounding-occluded-windows
+```
+
+GPU rasterisation and zero-copy are forced on even when the driver is blocklisted, canvas work is pushed out of process, ANGLE is pinned to D3D11, and all three of Chromium's background-throttling paths — the Windows equivalent of App Nap — are disabled.
+
+### Building it yourself
+
+On Windows with [Rust](https://rustup.rs), Node 20+ and the MSVC build tools:
+
+```bash
+npm install
+npm run exe
+```
+
+Output lands in `src-tauri/target/release/bundle/nsis/`.
 
 ### Desktop project layout
 

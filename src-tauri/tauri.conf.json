@@ -37,7 +37,8 @@
         "allowLinkPreview": false,
         "devtools": false,
         "incognito": false,
-        "shadow": true
+        "shadow": true,
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --ignore-gpu-blocklist --enable-gpu-rasterization --enable-zero-copy --enable-accelerated-2d-canvas --canvas-oop-rasterization --use-angle=d3d11 --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows"
       }
     ],
     "security": {
@@ -54,10 +55,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": [
-      "dmg",
-      "app"
-    ],
+    "targets": "all",
     "category": "Game",
     "publisher": "Joey-JM",
     "copyright": "Minecraft content and assets \u00a9 Mojang. Build by Joey-JM, based on Eaglercraft 26.2 by o_xer.",
@@ -90,6 +88,22 @@
         }
       },
       "infoPlist": "Info.plist"
+    },
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      },
+      "allowDowngrades": true,
+      "nsis": {
+        "installMode": "currentUser",
+        "compression": "lzma",
+        "displayLanguageSelector": false,
+        "languages": [
+          "English"
+        ],
+        "startMenuFolder": "26.3-JM"
+      }
     }
   }
 }
