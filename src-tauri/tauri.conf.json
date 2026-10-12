@@ -58,8 +58,8 @@
     "targets": "all",
     "category": "Game",
     "publisher": "Joey-JM",
-    "copyright": "Minecraft content and assets \u00a9 Mojang. Build by Joey-JM, based on Eaglercraft 26.2 by o_xer.",
-    "shortDescription": "26.3-JM \u2014 native macOS build",
+    "copyright": "Minecraft content and assets © Mojang. Build by Joey-JM, based on Eaglercraft 26.2 by o_xer.",
+    "shortDescription": "26.3-JM — native macOS build",
     "longDescription": "26.3-JM is a custom browser build based on Eaglercraft 26.2 with selected Minecraft 26.3 features backported, packaged as a native macOS application with ultra-high-performance rendering enabled.",
     "homepage": "https://github.com/joeymavv/26.3-JM",
     "icon": [
