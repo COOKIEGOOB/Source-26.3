@@ -1,8 +1,21 @@
 {
-  "comment": "Pinned 26.3-JM game payload. The 86 MB HTML is downloaded at build time and never committed.",
-  "release": "https://github.com/joeymavv/26.3-JM/releases/tag/v26.3-jm.1",
-  "filename": "26.3-fixed.html",
-  "url": "https://github.com/joeymavv/26.3-JM/releases/download/v26.3-jm.1/26.3-fixed.html",
-  "size": 85825296,
+  "comment": [
+    "Where the desktop app gets its game payload.",
+    "The HTML is downloaded at build time and never committed (it is ~86 MB).",
+    "",
+    "Precedence, highest first:",
+    "  1. GAME_LOCAL  env  - path to an HTML file already on disk",
+    "  2. GAME_URL    env  - direct download URL (CI reads the GAME_URL repo variable)",
+    "  3. url         below",
+    "",
+    "sha256 may be left empty; the build then prints the hash it saw so you can pin it."
+  ],
+
+  "name": "Eagler26 26.3 (Gold Launcher offline build)",
+  "source": "https://client.goldhq.net/",
+  "notes": "client.goldhq.net builds its single-file offline HTML in the browser, so there is no fixed download URL. Produce the file once via 'Download Instead?' on that site, host it somewhere the build can reach (a GitHub release asset works well), and put that link in `url` or in the GAME_URL repo variable.",
+
+  "filename": "eagler26-26.3-offline.html",
+  "url": "",
   "sha256": ""
 }

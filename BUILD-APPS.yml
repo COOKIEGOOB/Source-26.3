@@ -1,35 +1,51 @@
 #  ────────────────────────────────────────────────────────────────────────────
-#  26.3-JM  →  macOS .dmg  +  Windows .exe   (AUTO-START — no buttons, no options)
+#  Eagler26 desktop builds  →  macOS .dmg  +  Windows .exe
 #
 #  Paste this over .github/workflows/macos-dmg.yml on github.com.
-#  The moment you press "Commit changes", the build starts by itself.
+#  Committing it starts a build immediately — no buttons, no options.
 #
-#  When it finishes: Actions ▸ click the run ▸ scroll to Artifacts ▸
-#  download "26.3-JM-macOS-dmg" and/or "26.3-JM-Windows-exe".
+#  WHERE THE GAME COMES FROM
+#  -------------------------
+#  The payload URL is NOT hard-coded. The build reads it from a repository
+#  variable so you can change it without touching any code:
+#
+#      Settings ▸ Secrets and variables ▸ Actions ▸ Variables ▸ New variable
+#          Name:  GAME_URL
+#          Value: <direct link to the single-file offline HTML>
+#
+#  If GAME_URL is unset, the build falls back to "url" in game.lock.json,
+#  and fails with instructions if that is empty too.
+#
+#  ARTIFACTS
+#  ---------
+#  Actions ▸ click the run ▸ scroll to Artifacts:
+#      Eagler26-macOS-dmg     26.3-JM-macOS-universal.dmg
+#      Eagler26-Windows-exe   Setup .exe + portable .exe
 #  ────────────────────────────────────────────────────────────────────────────
 
-name: Build macOS DMG and Windows EXE
+name: Build desktop apps
 
 on:
-  # Any commit to these branches starts a build. No clicking required.
   push:
     branches:
       - main
       - "arena/**"
-  # Still available from the Actions tab if you ever want it.
   workflow_dispatch:
 
 concurrency:
-  group: macos-dmg
+  group: desktop-apps
   cancel-in-progress: true
 
 env:
-  # The branch that actually holds the Tauri project.
+  # Branch holding the Tauri project.
   SOURCE_REF: arena/02e09d53-source-26-3
+  # Where to download the single-file game HTML (repo variable, may be empty).
+  GAME_URL: ${{ vars.GAME_URL }}
 
 jobs:
-  dmg:
-    name: Build .dmg on macOS
+  # ===========================================================================
+  macos:
+    name: macOS .dmg
     runs-on: macos-14
     timeout-minutes: 120
 
@@ -40,7 +56,8 @@ jobs:
           ref: ${{ env.SOURCE_REF }}
           fetch-depth: 1
 
-      - name: Confirm the project is present
+      - name: Preflight
+        shell: bash
         run: |
           set -euo pipefail
           missing=0
@@ -48,14 +65,20 @@ jobs:
                    scripts/prepare-game.mjs scripts/perf-preamble.js \
                    src-tauri/Cargo.toml src-tauri/tauri.conf.json \
                    src-tauri/Info.plist src-tauri/entitlements.plist \
-                   src-tauri/src/main.rs; do
+                   src-tauri/build.rs src-tauri/src/main.rs; do
             [ -e "$f" ] || { echo "missing: $f"; missing=1; }
           done
-          [ "$missing" -eq 0 ] || {
-            echo "::error::Branch '$SOURCE_REF' does not contain the Tauri project."
-            exit 1
-          }
-          echo "Project OK."
+          [ "$missing" -eq 0 ] || { echo "::error::Branch '$SOURCE_REF' is missing project files."; exit 1; }
+
+          node -e "JSON.parse(require('fs').readFileSync('src-tauri/tauri.conf.json','utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('game.lock.json','utf8'))"
+          node --check scripts/perf-preamble.js
+
+          if [ -n "${GAME_URL:-}" ]; then
+            echo "Game payload: GAME_URL repository variable"
+          else
+            echo "Game payload: game.lock.json -> url"
+          fi
 
       - name: Set up Node
         uses: actions/setup-node@v7
@@ -74,14 +97,14 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             src-tauri/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          key: macos-cargo-${{ hashFiles('src-tauri/Cargo.toml') }}
+          restore-keys: macos-cargo-
 
-      - name: Cache the 86 MB game payload
+      - name: Cache the game payload
         uses: actions/cache@v6
         with:
           path: .game-cache
-          key: game-${{ hashFiles('game.lock.json') }}
+          key: game-${{ hashFiles('game.lock.json') }}-${{ vars.GAME_URL }}
 
       - name: Install JS tooling
         run: npm install --no-audit --no-fund
@@ -96,55 +119,53 @@ jobs:
         run: npx tauri build --target universal-apple-darwin --bundles dmg
 
       - name: Collect the .dmg
+        shell: bash
         run: |
           set -euo pipefail
           mkdir -p out
           found=0
-          while IFS= read -r -d '' f; do
-            cp "$f" out/
-            found=1
-          done < <(find src-tauri/target -name '*.dmg' -print0)
-
+          while IFS= read -r -d '' f; do cp "$f" out/; found=1; done \
+            < <(find src-tauri/target -name '*.dmg' -print0)
           if [ "$found" -eq 0 ]; then
             echo "::error::No .dmg was produced."
             find src-tauri/target -maxdepth 5 -type d -name bundle || true
             exit 1
           fi
-
           cd out
-          for f in *.dmg; do
-            mv -f "$f" "26.3-JM-macOS-universal.dmg"
-            break
-          done
-          shasum -a 256 *.dmg | tee SHA256SUMS-dmg.txt
+          for f in *.dmg; do mv -f "$f" "Eagler26-macOS-universal.dmg"; break; done
+          shasum -a 256 * | tee SHA256SUMS.txt
           ls -lh
 
       - name: Upload the .dmg
         uses: actions/upload-artifact@v7
         with:
-          name: 26.3-JM-macOS-dmg
+          name: Eagler26-macOS-dmg
           path: out/*
           if-no-files-found: error
           retention-days: 90
 
       - name: Summary
         if: always()
+        shell: bash
         run: |
           {
-            echo "### 26.3-JM macOS build"
-            echo
+            echo "### macOS"
             if [ -d out ]; then
+              echo '```'; ls -lh out; echo '```'
+              echo "Artifact: **Eagler26-macOS-dmg**"
+              echo
+              echo "Not notarised — after installing run:"
               echo '```'
-              ls -lh out
+              echo 'xattr -dr com.apple.quarantine /Applications/26.3-JM.app'
               echo '```'
-              echo "Download **26.3-JM-macOS-dmg** from the Artifacts section of this run."
             else
-              echo "No artifact produced — check the logs above."
+              echo "No artifact produced — check the logs."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-  exe:
-    name: Build .exe on Windows
+  # ===========================================================================
+  windows:
+    name: Windows .exe
     runs-on: windows-latest
     timeout-minutes: 120
 
@@ -154,6 +175,22 @@ jobs:
         with:
           ref: ${{ env.SOURCE_REF }}
           fetch-depth: 1
+
+      - name: Preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=0
+          for f in package.json game.lock.json assets/app-icon.png \
+                   scripts/prepare-game.mjs scripts/perf-preamble.js \
+                   src-tauri/Cargo.toml src-tauri/tauri.conf.json \
+                   src-tauri/build.rs src-tauri/src/main.rs; do
+            [ -e "$f" ] || { echo "missing: $f"; missing=1; }
+          done
+          [ "$missing" -eq 0 ] || { echo "::error::Branch '$SOURCE_REF' is missing project files."; exit 1; }
+          node -e "JSON.parse(require('fs').readFileSync('src-tauri/tauri.conf.json','utf8'))"
+          node --check scripts/perf-preamble.js
+          echo "Preflight OK"
 
       - name: Set up Node
         uses: actions/setup-node@v7
@@ -175,11 +212,11 @@ jobs:
           key: windows-cargo-${{ hashFiles('src-tauri/Cargo.toml') }}
           restore-keys: windows-cargo-
 
-      - name: Cache the 86 MB game payload
+      - name: Cache the game payload
         uses: actions/cache@v6
         with:
           path: .game-cache
-          key: game-${{ hashFiles('game.lock.json') }}
+          key: game-${{ hashFiles('game.lock.json') }}-${{ vars.GAME_URL }}
 
       - name: Install JS tooling
         run: npm install --no-audit --no-fund
@@ -199,28 +236,25 @@ jobs:
           set -euo pipefail
           mkdir -p out
 
-          # 1. The NSIS setup program - what most people want.
           setup="$(find src-tauri/target -path '*bundle/nsis/*.exe' | head -1 || true)"
           if [ -z "$setup" ]; then
             echo "::error::No NSIS installer was produced."
             find src-tauri/target -maxdepth 5 -type d -name bundle || true
             exit 1
           fi
-          cp "$setup" "out/26.3-JM-Windows-Setup.exe"
+          cp "$setup" "out/Eagler26-Windows-Setup.exe"
 
-          # 2. The bare application binary, for people who want no installer.
-          #    The game is embedded in it; it only needs the WebView2 runtime.
           app="$(find src-tauri/target/release -maxdepth 1 -name '*.exe' | head -1 || true)"
-          if [ -n "$app" ]; then cp "$app" "out/26.3-JM-Windows-portable.exe"; fi
+          if [ -n "$app" ]; then cp "$app" "out/Eagler26-Windows-portable.exe"; fi
 
           cd out
-          sha256sum *.exe | tee SHA256SUMS-exe.txt
+          sha256sum * | tee SHA256SUMS.txt
           ls -lh
 
       - name: Upload the .exe
         uses: actions/upload-artifact@v7
         with:
-          name: 26.3-JM-Windows-exe
+          name: Eagler26-Windows-exe
           path: out/*
           if-no-files-found: error
           retention-days: 90
@@ -230,14 +264,13 @@ jobs:
         shell: bash
         run: |
           {
-            echo "### 26.3-JM Windows build"
-            echo
+            echo "### Windows"
             if [ -d out ]; then
-              echo '```'
-              ls -lh out
-              echo '```'
-              echo "Download **26.3-JM-Windows-exe** from the Artifacts section of this run."
+              echo '```'; ls -lh out; echo '```'
+              echo "Artifact: **Eagler26-Windows-exe**"
+              echo
+              echo "Not code-signed — SmartScreen will warn once. Click *More info ▸ Run anyway*."
             else
-              echo "No artifact produced - check the logs above."
+              echo "No artifact produced — check the logs."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
