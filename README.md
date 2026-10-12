@@ -49,17 +49,7 @@ This repository also builds **26.3-JM as a native desktop application** for macO
 
 Builds run on GitHub's macOS and Windows runners — you do not need a Mac or a PC.
 
-**One-time setup.** The game payload URL is not hard-coded, because
-[client.goldhq.net](https://client.goldhq.net/) assembles its single-file offline build
-in the browser rather than serving it from a fixed link. So:
-
-1. Open <https://client.goldhq.net/> and use **Download Instead?** to save the one-file HTML.
-2. Host that file somewhere the build can download it — a GitHub release asset on this repo works well (Releases ▸ Draft a new release ▸ drag the file in ▸ Publish).
-3. Put the link in **Settings ▸ Secrets and variables ▸ Actions ▸ Variables ▸ New variable**, named `GAME_URL`.
-
-   (Or write it into `game.lock.json` → `url` instead.)
-
-**Then build.** Copy `BUILD-APPS.yml` from the repo root over `.github/workflows/macos-dmg.yml`.
+Copy `BUILD-APPS.yml` from the repo root over `.github/workflows/macos-dmg.yml`.
 Committing it starts a build; both platforms build in parallel. When the run finishes,
 the **Artifacts** box on the run page holds:
 
@@ -74,6 +64,26 @@ the portable `.exe` directly.
 The app is not notarised or code-signed. On macOS run
 `xattr -dr com.apple.quarantine /Applications/26.3-JM.app`; on Windows click
 **More info ▸ Run anyway** at the SmartScreen prompt.
+
+### Which game gets packaged
+
+`game.lock.json` pins the payload. The default is
+[**Gaius 26.3**](https://github.com/TypeThe0ry/Gaius) `v0.3.3` — the official Minecraft
+Java client bytecode compiled to JavaScript with TeaVM, shipped as one self-contained
+HTML file with an integrated single-player server in a Web Worker. It is pinned by
+SHA-256, so the build refuses to bundle anything else.
+
+To package something different, set a repository variable instead of editing code:
+
+**Settings ▸ Secrets and variables ▸ Actions ▸ Variables ▸ New variable** → `GAME_URL`
+
+Known payloads are listed under `alternatives` in `game.lock.json`: Gaius 26.2,
+Gaius 1.21.11, and the original 26.3-JM build. [client.goldhq.net](https://client.goldhq.net/)
+has no fixed URL — it assembles its offline HTML in your browser, so download it once,
+host it (a GitHub release asset works), and point `GAME_URL` at that.
+
+Clear `sha256` in `game.lock.json` when using a moving URL; the build then prints the
+hash it saw so you can pin it afterwards.
 
 ### What "ultra high performance" means here
 

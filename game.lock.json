@@ -1,21 +1,32 @@
 {
   "comment": [
     "Where the desktop app gets its game payload.",
-    "The HTML is downloaded at build time and never committed (it is ~86 MB).",
+    "The HTML is downloaded at build time and never committed (it is >100 MB).",
     "",
     "Precedence, highest first:",
     "  1. GAME_LOCAL  env  - path to an HTML file already on disk",
     "  2. GAME_URL    env  - direct download URL (CI reads the GAME_URL repo variable)",
     "  3. url         below",
     "",
-    "sha256 may be left empty; the build then prints the hash it saw so you can pin it."
+    "Pinned to an exact release tag so builds are reproducible. The moving",
+    "'latest' alias is https://github.com/TypeThe0ry/Gaius/releases/latest/download/Gaius-26.3.html",
+    "- if you use that, clear sha256 below, because it changes every release."
   ],
 
-  "name": "Eagler26 26.3 (Gold Launcher offline build)",
-  "source": "https://client.goldhq.net/",
-  "notes": "client.goldhq.net builds its single-file offline HTML in the browser, so there is no fixed download URL. Produce the file once via 'Download Instead?' on that site, host it somewhere the build can reach (a GitHub release asset works well), and put that link in `url` or in the GAME_URL repo variable.",
+  "name": "Gaius 26.3 (TeaVM-compiled Minecraft Java client)",
+  "project": "https://github.com/TypeThe0ry/Gaius",
+  "release": "https://github.com/TypeThe0ry/Gaius/releases/tag/v0.3.3",
+  "version": "v0.3.3",
 
-  "filename": "eagler26-26.3-offline.html",
-  "url": "",
-  "sha256": ""
+  "filename": "Gaius-26.3.html",
+  "url": "https://github.com/TypeThe0ry/Gaius/releases/download/v0.3.3/Gaius-26.3.html",
+  "size": 129069152,
+  "sha256": "0c1ab5fc49c244bac0f16ef000a9f4f36fa3414180f02a6775c4977c672c97d3",
+
+  "alternatives": {
+    "gaius-26.2": "https://github.com/TypeThe0ry/Gaius/releases/download/v0.3.3/Gaius-26.2.html",
+    "gaius-1.21.11": "https://github.com/TypeThe0ry/Gaius/releases/latest/download/Gaius-1.21.11.html",
+    "26.3-JM": "https://github.com/joeymavv/26.3-JM/releases/download/v26.3-jm.1/26.3-fixed.html",
+    "goldhq": "no fixed URL - client.goldhq.net assembles its offline HTML in the browser; host the file yourself and set the GAME_URL repo variable"
+  }
 }
