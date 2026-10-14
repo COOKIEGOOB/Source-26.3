@@ -4,12 +4,13 @@
 #  Paste this over .github/workflows/macos-dmg.yml on github.com.
 #  Committing it starts the build. No buttons, no options.
 #
-#  Four apps come out, as four separate artifacts:
+#  Six apps come out, as six separate artifacts:
 #
-#      26.3-JM-macOS-dmg       26.3-JM        joins Eaglercraft wss:// servers
-#      26.3-JM-Windows-exe     26.3-JM
-#      Gaius-26.3-macOS-dmg    Gaius 26.3     joins ordinary Java servers
-#      Gaius-26.3-Windows-exe  Gaius 26.3
+#      Eaglercraft-26.3-macOS-dmg / -Windows-exe   real 26.3, wss:// servers
+#      26.3-JM-macOS-dmg          / -Windows-exe   26.2 engine + backports, wss://
+#      Gaius-26.3-macOS-dmg       / -Windows-exe   real 26.3, plain Java servers
+#
+#  Don't want all six? Delete the matrix blocks you don't need.
 #
 #  The two clients use different bundle identifiers, so they install side by
 #  side and keep separate worlds. Install both; open whichever you need.
@@ -44,24 +45,40 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - payload: eagler263
+            os: macos-14
+            kind: dmg
+            base: Eaglercraft-26.3
+            label: Eaglercraft 26.3 · macOS
+            artifact: Eaglercraft-26.3-macOS-dmg
+          - payload: eagler263
+            os: windows-latest
+            kind: exe
+            base: Eaglercraft-26.3
+            label: Eaglercraft 26.3 · Windows
+            artifact: Eaglercraft-26.3-Windows-exe
           - payload: jm
             os: macos-14
             kind: dmg
+            base: 26.3-JM
             label: 26.3-JM · macOS
             artifact: 26.3-JM-macOS-dmg
           - payload: jm
             os: windows-latest
             kind: exe
+            base: 26.3-JM
             label: 26.3-JM · Windows
             artifact: 26.3-JM-Windows-exe
           - payload: gaius
             os: macos-14
             kind: dmg
+            base: Gaius-26.3
             label: Gaius 26.3 · macOS
             artifact: Gaius-26.3-macOS-dmg
           - payload: gaius
             os: windows-latest
             kind: exe
+            base: Gaius-26.3
             label: Gaius 26.3 · Windows
             artifact: Gaius-26.3-Windows-exe
 
@@ -151,7 +168,7 @@ jobs:
             exit 1
           fi
           cd out
-          for f in *.dmg; do mv -f "$f" "${{ matrix.payload == 'jm' && '26.3-JM' || 'Gaius-26.3' }}-macOS-universal.dmg"; break; done
+          for f in *.dmg; do mv -f "$f" "${{ matrix.base }}-macOS-universal.dmg"; break; done
           shasum -a 256 * | tee SHA256SUMS.txt
           ls -lh
 
@@ -166,7 +183,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p out
-          base="${{ matrix.payload == 'jm' && '26.3-JM' || 'Gaius-26.3' }}"
+          base="${{ matrix.base }}"
 
           setup="$(find src-tauri/target -path '*bundle/nsis/*.exe' | head -1 || true)"
           if [ -z "$setup" ]; then

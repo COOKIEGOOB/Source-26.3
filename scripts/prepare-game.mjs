@@ -168,6 +168,21 @@ function verify(buf) {
   return actual;
 }
 
+function verifySize(buf) {
+  const expected = Number(lock.size || 0);
+  if (!expected) return;
+  if (buf.length !== expected) {
+    throw new Fail(
+      `Size mismatch for the game payload.\n` +
+        `  expected ${expected} bytes\n` +
+        `  actual   ${buf.length} bytes\n` +
+        `This is a second integrity check for payloads that have no pinned sha256.\n` +
+        `If the upstream file legitimately changed, update "size" in payloads.json.`
+    );
+  }
+  log(`size OK (${expected} bytes)`);
+}
+
 function sanityCheckHtml(html) {
   const head = html.slice(0, 4096).toLowerCase();
   if (!head.includes('<html') && !head.includes('<!doctype html')) {
@@ -204,6 +219,7 @@ function inject(html) {
 async function main() {
   const raw = await getGameHtml();
   verify(raw);
+  verifySize(raw);
 
   let html = raw.toString('utf8');
   sanityCheckHtml(html);

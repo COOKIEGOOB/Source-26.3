@@ -71,12 +71,16 @@ A build produces **four apps** — both clients, both platforms:
 
 | Artifact | Client | Multiplayer |
 | --- | --- | --- |
-| `26.3-JM-macOS-dmg` / `26.3-JM-Windows-exe` | 26.3-JM (Eaglercraft 26.2 + 26.3 backports) | **Eaglercraft `wss://` servers** |
-| `Gaius-26.3-macOS-dmg` / `Gaius-26.3-Windows-exe` | Gaius 26.3 (official bytecode via TeaVM) | Ordinary offline-mode Java servers via RelayNode |
+| `Eaglercraft-26.3-*` | Eaglercraft 26.3, prebuilt by [DhyeyBG](https://github.com/DhyeyBG/Eaglercraft-26.3) | **Eaglercraft `wss://` servers** |
+| `26.3-JM-*` | 26.3-JM — Eaglercraft 26.2 + 26.3 backports | **Eaglercraft `wss://` servers** |
+| `Gaius-26.3-*` | Gaius 26.3 — official bytecode via TeaVM | Ordinary offline-mode Java servers via RelayNode |
 
-They ship under different bundle identifiers (`com.joeyjm.mc263` and
-`net.gaius.client263`), so both install side by side and keep **separate world
-storage**. Install both and open whichever one the server you want needs.
+Each row builds a `.dmg` and a `.exe`, so a run produces six artifacts. Delete the
+matrix blocks you don't want from `BUILD-APPS.yml` to trim it.
+
+Every client ships under its own bundle identifier, so they all install side by side
+and keep **separate world storage**. Install the ones you want and open whichever
+matches the server you are joining.
 
 Gaius cannot join Eaglercraft `wss://` servers and 26.3-JM cannot join plain Java
 servers — the protocols are different. That is exactly why both are built.
@@ -85,6 +89,7 @@ servers — the protocols are different. That is exactly why both are built.
 client. `scripts/set-payload.mjs <id>` applies one locally:
 
 ```bash
+node scripts/set-payload.mjs eagler263 # Eaglercraft 26.3 (DhyeyBG)
 node scripts/set-payload.mjs jm        # 26.3-JM
 node scripts/set-payload.mjs gaius     # Gaius 26.3
 node scripts/set-payload.mjs gaius-26.2
@@ -95,8 +100,10 @@ The `custom` payload reads the `GAME_URL` repository variable — use it for a
 self-hosted [client.goldhq.net](https://client.goldhq.net/) export, which has no fixed
 download URL of its own.
 
-Every pinned payload is verified by SHA-256 before it is bundled; the build refuses to
-package anything that does not match.
+Payloads are verified before bundling: by SHA-256 where upstream publishes one, and by
+exact byte size otherwise. The build refuses to package anything that does not match.
+When a payload has no pinned hash the build prints the hash it saw, so you can add it
+to `payloads.json` afterwards.
 
 ### What "ultra high performance" means here
 

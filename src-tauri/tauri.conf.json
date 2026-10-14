@@ -1,9 +1,9 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "26.3-JM",
+  "productName": "Eaglercraft 26.3",
   "version": "26.3.1",
-  "identifier": "com.joeyjm.mc263",
-  "mainBinaryName": "26.3-JM",
+  "identifier": "net.eaglercraft.client263",
+  "mainBinaryName": "Eaglercraft-26.3",
   "build": {
     "frontendDist": "../dist",
     "beforeDevCommand": "node scripts/prepare-game.mjs",
@@ -15,7 +15,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "26.3-JM",
+        "title": "Eaglercraft 26.3",
         "url": "index.html",
         "width": 1280,
         "height": 760,
