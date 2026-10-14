@@ -78,6 +78,9 @@ A build produces **four apps** — both clients, both platforms:
 Each row builds a `.dmg` and a `.exe`, so a run produces six artifacts. Delete the
 matrix blocks you don't want from `BUILD-APPS.yml` to trim it.
 
+All three clients can import custom worlds. See **[WORLDS.md](WORLDS.md)** for how
+to load downloaded maps, and the size and version limits that bite on large ones.
+
 Every client ships under its own bundle identifier, so they all install side by side
 and keep **separate world storage**. Install the ones you want and open whichever
 matches the server you are joining.
